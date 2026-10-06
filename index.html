@@ -245,7 +245,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 (function(){
 "use strict";
 var FOODS_FIXED={
-  eggs:{n:"Eggs x4",p:25,c:2,k:290},
+  eggs:{n:"Egg, 1 whole",p:6,c:1,k:72},
   milk:{n:"Amul Taaza 500 ml",p:16,c:25,k:290},
   chicken:{n:"Chicken breast 200 g raw",s:"Chicken 200g",p:46,c:0,k:230},
   soya:{n:"Bambino soya chunks 50 g dry",s:"Soya 50g",p:26,c:16,k:156},
@@ -256,12 +256,13 @@ var FOODS_FIXED={
   pb:{n:"Peanut butter, 1 tbsp",p:4,c:3,k:95},
   dates:{n:"Dates, 1 piece",p:0,c:18,k:66},
   dal:{n:"Dal 50 g dry (moong/masoor)",s:"Dal 50g",p:12,c:30,k:170},
-  peanuts:{n:"Peanuts, 30 g handful",p:8,c:5,k:170}
+  peanuts:{n:"Peanuts, 30 g handful",p:8,c:5,k:170},
+  mushroom:{n:"Mushroom 90 g",p:3,c:3,k:20}
 };
 var OATS={yu:{n:"Yu oats 100 g",p:25,c:50,k:404},reg:{n:"Regular oats 100 g",p:13,c:66,k:380}};
 var SRC={eggs:"Estimate",oats_yu:"Protein and kcal from the app, carbs estimated",oats_reg:"Estimate",milk:"Estimate, the app shows no nutrition",
   chicken:"Estimate",soya:"Protein and kcal from the app, carbs estimated",paneer:"Protein and kcal from the app, carbs estimated",
-  rice:"Estimate",roti:"Estimate, no ghee",banana:"Estimate",pb:"Estimate",dates:"Estimate, Medjool-size",dal:"Estimate, raw weight",peanuts:"Estimate"};
+  rice:"Estimate",roti:"Estimate, no ghee",banana:"Estimate",pb:"Estimate",dates:"Estimate, Medjool-size",dal:"Estimate, raw weight",peanuts:"Estimate",mushroom:"Estimate, raw"};
 var SPLIT=["Rest","Chest + Biceps","Back + Triceps","Legs, quads","Shoulders + Abs","Legs, hamstrings and glutes","Rest"];
 var MAINS=[["chicken","Chicken 200g"],["soya","Soya 50g"],["paneer","Paneer 200g"],["dal","Dal 50g"],["none","Skip"]];
 var METRICS=[["p","Protein","g","--prot"],["c","Carbs","g","--carb"],["k","Calories","kcal","--kcal"]];
@@ -314,7 +315,7 @@ function shift(s,n){var d=parse(s);d.setDate(d.getDate()+n);return ymd(d)}
 function $(id){return document.getElementById(id)}
 function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 
-function defaultDay(){return{lunch:"none",dinner:"none",eggs:true,oats:true,milk:1,rice:0,roti:0,banana:0,pb:0,dates:0,weight:null,gym:false,ex:{}}}
+function defaultDay(){return{lunch:"none",dinner:"none",eggs:4,oats:true,milk:1,rice:0,roti:0,banana:0,pb:0,dates:0,peanuts:0,mushroom:0,weight:null,gym:false,ex:{}}}
 function dayOf(s){return state.days[s]||defaultDay()}
 function touch(s){if(!state.days[s])state.days[s]=defaultDay();if(!state.days[s].ex)state.days[s].ex={};return state.days[s]}
 function oatsFood(){return OATS[state.oats]||OATS.yu}
@@ -322,7 +323,7 @@ function oatsFood(){return OATS[state.oats]||OATS.yu}
 function totals(d){
   var t={p:0,c:0,k:0};
   function add(f,n){t.p+=f.p*n;t.c+=f.c*n;t.k+=f.k*n}
-  if(d.eggs)add(FOODS_FIXED.eggs,1);
+  add(FOODS_FIXED.eggs,d.eggs||0);
   if(d.oats)add(oatsFood(),1);
   add(FOODS_FIXED.milk,d.milk||0);
   if(d.lunch&&FOODS_FIXED[d.lunch])add(FOODS_FIXED[d.lunch],1);
@@ -331,6 +332,7 @@ function totals(d){
   add(FOODS_FIXED.banana,d.banana||0);add(FOODS_FIXED.pb,d.pb||0);
   add(FOODS_FIXED.dates,d.dates||0);
   add(FOODS_FIXED.peanuts,d.peanuts||0);
+  add(FOODS_FIXED.mushroom,d.mushroom||0);
   return t;
 }
 
@@ -376,6 +378,8 @@ function merge(o){
       if(!state.days[k].ex)state.days[k].ex={};
       if(state.days[k].milk===true)state.days[k].milk=1;
       if(state.days[k].milk===false)state.days[k].milk=0;
+      if(state.days[k].eggs===true)state.days[k].eggs=4;
+      if(state.days[k].eggs===false)state.days[k].eggs=0;
     });
   }
 }
@@ -439,13 +443,14 @@ function renderPlate(){
   var d=dayOf(sel),o=oatsFood();
   function chip(k,name,f){return '<button class="chip" data-act="base" data-k="'+k+'" aria-pressed="'+(!!d[k])+'">'+name+'<small>'+f.p+'g protein</small></button>'}
   var h='<div class="row"><div class="rowHead"><div class="label">Every day</div><span>tap to remove</span></div><div class="chips">'
-   +chip("eggs","4 eggs",FOODS_FIXED.eggs)+chip("oats","Oats 100g",o)+'</div></div>'
+   +chip("oats","Oats 100g",o)+'</div></div>'
    +mainRow("lunch","Lunch main")+mainRow("dinner","Dinner main")
    +'<hr class="rule"><div class="steppers">'
-   +stepper("milk","Amul milk","500 ml",d.milk||0,2)+stepper("dates","Dates","piece",d.dates||0,5)
+   +stepper("eggs","Eggs","whole",d.eggs||0,8)+stepper("milk","Amul milk","500 ml",d.milk||0,2)+stepper("dates","Dates","piece",d.dates||0,5)
    +stepper("rice","Rice","150 g cooked",d.rice||0,4)+stepper("roti","Rotis","medium",d.roti||0,10)
    +stepper("banana","Banana","optional",d.banana||0,3)+stepper("pb","Peanut butter","tbsp, optional",d.pb||0,6)
    +stepper("peanuts","Peanuts","30 g handful",d.peanuts||0,4)
+   +stepper("mushroom","Mushroom","90 g",d.mushroom||0,2)
    +'</div><hr class="rule"><div class="bodyRow"><div class="field"><label for="wt">Weight (kg)</label>'
    +'<input id="wt" type="number" inputmode="decimal" step="0.1" min="30" max="200" value="'+(d.weight==null?"":d.weight)+'" placeholder="65.0"></div>'
    +'<button class="chip" data-act="gym" aria-pressed="'+(!!d.gym)+'" style="min-height:44px;flex-direction:row;gap:6px">Gym done</button></div>';
@@ -526,10 +531,10 @@ function renderWeight(){
 }
 function renderRef(){
   var T=state.targets,o=oatsFood();
-  var rows=[["eggs","Eggs x4","4 eggs",FOODS_FIXED.eggs],["oats_"+state.oats,o.n,"100 g",o],["milk","Amul Taaza milk","500 ml",FOODS_FIXED.milk],
+  var rows=[["eggs","Egg","1 whole",FOODS_FIXED.eggs],["oats_"+state.oats,o.n,"100 g",o],["milk","Amul Taaza milk","500 ml",FOODS_FIXED.milk],
    ["chicken","Chicken breast","200 g raw",FOODS_FIXED.chicken],["soya","Bambino soya chunks","50 g dry",FOODS_FIXED.soya],["paneer","FruBon paneer","200 g",FOODS_FIXED.paneer],
    ["rice","Rice","150 g cooked",FOODS_FIXED.rice],["roti","Roti","1 medium",FOODS_FIXED.roti],["banana","Banana","1 medium",FOODS_FIXED.banana],["pb","Peanut butter","1 tbsp",FOODS_FIXED.pb],
-   ["dates","Dates","1 piece",FOODS_FIXED.dates],["dal","Dal (moong/masoor)","50 g dry",FOODS_FIXED.dal],["peanuts","Peanuts","30 g handful",FOODS_FIXED.peanuts]];
+   ["dates","Dates","1 piece",FOODS_FIXED.dates],["dal","Dal (moong/masoor)","50 g dry",FOODS_FIXED.dal],["peanuts","Peanuts","30 g handful",FOODS_FIXED.peanuts],["mushroom","Mushroom","90 g",FOODS_FIXED.mushroom]];
   var h='<div class="row"><div class="label">Daily targets</div><div class="targets">'
    +'<div class="field"><label for="tp">Protein g</label><input id="tp" data-t="p" type="number" inputmode="numeric" min="1" value="'+T.p+'"></div>'
    +'<div class="field"><label for="tc">Carbs g</label><input id="tc" data-t="c" type="number" inputmode="numeric" min="1" value="'+T.c+'"></div>'
